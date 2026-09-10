@@ -16,22 +16,20 @@ check01() {
 
 check02() {
     [[ -x tools/recruit-info ]] || return 1
-    [[ -f answers/02.md ]] || return 1
-    ! grep -q '请在这里回答题目中的两个问题' answers/02.md || return 1
-    [[ "$(grep -cv '^[[:space:]]*$' answers/02.md)" -ge 3 ]]
+    [[ -s answers/02.md ]]
 }
 
 check03() {
     [[ -f output/03_code_search.txt ]] || return 1
     expected=$'workspace/project/main.py\nworkspace/project/utils/helper.py'
-    actual="$(sed '/^[[:space:]]*$/d' output/03_code_search.txt | sort)"
+    actual="$(sed '/^[[:space:]]*$/d' output/03_code_search.txt)"
     [[ "$actual" == "$expected" ]]
 }
 
 check04() {
     [[ "$(tr -d '[:space:]' < output/04_error_count.txt 2>/dev/null)" == "7" ]] || return 1
     expected_users=$'alice\nbob\ncarol\ndave'
-    actual_users="$(sed '/^[[:space:]]*$/d' output/04_error_users.txt 2>/dev/null | sort -u)"
+    actual_users="$(sed '/^[[:space:]]*$/d' output/04_error_users.txt 2>/dev/null)"
     [[ "$actual_users" == "$expected_users" ]] || return 1
     [[ "$(tr -d '[:space:]' < output/04_top_code.txt 2>/dev/null)" == "500" ]]
 }
@@ -63,9 +61,7 @@ check08() {
     bash scripts/batch-copy.sh "$tmp" "data/files/report.txt" "data/files/My Report.txt" >/dev/null 2>&1 || { rm -rf "$tmp"; return 1; }
     [[ -f "$tmp/report.txt" && -f "$tmp/My Report.txt" ]] || { rm -rf "$tmp"; return 1; }
     rm -rf "$tmp"
-    [[ -f answers/08.md ]] || return 1
-    ! grep -q '请在这里简短回答' answers/08.md || return 1
-    [[ "$(grep -cv '^[[:space:]]*$' answers/08.md)" -ge 2 ]]
+    [[ -s answers/08.md ]]
 }
 
 check09() {
@@ -84,13 +80,23 @@ run_one() {
     n="$1"
     case "$n" in
         01) check01 && pass "01 Project Hunt" || fail "01 Project Hunt" ;;
-        02) check02 && pass "02 Missing Command" || fail "02 Missing Command" ;;
+        02) if check02; then
+                pass "02 Missing Command"
+                echo "[REVIEW] Task 02 文字答案待人工检查"
+            else
+                fail "02 Missing Command"
+            fi ;;
         03) check03 && pass "03 Code Search" || fail "03 Code Search" ;;
         04) check04 && pass "04 Log Statistics" || fail "04 Log Statistics" ;;
         05) check05 && pass "05 Pipeline Challenge" || fail "05 Pipeline Challenge" ;;
         06) check06 && pass "06 Streams & Redirection" || fail "06 Streams & Redirection" ;;
         07) check07 && pass "07 Analyze Script" || fail "07 Analyze Script" ;;
-        08) check08 && pass "08 Script Debug" || fail "08 Script Debug" ;;
+        08) if check08; then
+                pass "08 Script Debug"
+                echo "[REVIEW] Task 08 文字答案待人工检查"
+            else
+                fail "08 Script Debug"
+            fi ;;
         09) check09 && pass "09 Process Hunter (Extra)" || fail "09 Process Hunter (Extra)" ;;
         *) echo "Usage: ./check.sh [01-09]"; return 2 ;;
     esac
